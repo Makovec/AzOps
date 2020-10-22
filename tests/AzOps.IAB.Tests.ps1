@@ -62,7 +62,7 @@ Describe "Tenant E2E Deployment (Integration Test)" -Tag "integration", "e2e", "
 
         # Task: Check if 'Tailspin' Management Group exists
         Write-AzOpsLog -Level Information -Topic "AzOps.IAB.Tests" -Message "Removing Tailspin Management Group"
-        if (Get-AzManagementGroup -GroupName 'Tailspin' -ErrorAction SilentlyContinue) {
+        if (Get-AzManagementGroup -GroupId 'Tailspin' -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) {
             Write-AzOpsLog -Level Information -Topic "AzOps.IAB.Tests" -Message "Running Remove-AzOpsManagementGroup"
             #Remove-AzOpsManagementGroup -GroupName  'Tailspin'
         }
@@ -71,7 +71,7 @@ Describe "Tenant E2E Deployment (Integration Test)" -Tag "integration", "e2e", "
 
         # Task: Initialize azops/
         Write-AzOpsLog -Level Information -Topic "AzOps.IAB.Tests" -Message "Running Initialize-AzOpsRepository"
-        Initialize-AzOpsRepository -SkipResourceGroup -SkipPolicy
+        Initialize-AzOpsRepository -SkipResourceGroup -SkipPolicy -SkipRole
 
         $testTemplateFiles = @(
             "$PSScriptRoot/../template/10-create-managementgroup.parameters.json",
@@ -92,19 +92,19 @@ Describe "Tenant E2E Deployment (Integration Test)" -Tag "integration", "e2e", "
         }
         Invoke-AzOpsChange $changeSet
         # Task: Re-initialize azops/
-        Initialize-AzOpsRepository -SkipResourceGroup -SkipPolicy
+        Initialize-AzOpsRepository -SkipResourceGroup -SkipPolicy -SkipRole
     }
 
     Context "In-a-Box" {
         # Debug: Get-AzTenantDeployment | Sort-Object -Property Timestamp -Descending | Format-Table
         It "Passes ProvisioningState 10-create-managementgroup" {
-            (Get-AzTenantDeployment -Name "10-create-managementgroup").ProvisioningState | Should -Match "Succeeded"
+            (Get-AzTenantDeployment -Name "AzOps-10-create-managementgroup").ProvisioningState | Should -Match "Succeeded"
         }
         It "Passes ProvisioningState 20-create-child-managementgroup" {
-            (Get-AzTenantDeployment -Name "20-create-child-managementgroup").ProvisioningState | Should -Match "Succeeded"
+            (Get-AzTenantDeployment -Name "AzOps-20-create-child-managementgroup").ProvisioningState | Should -Match "Succeeded"
         }
         It "Passes ProvisioningState 30-create-policydefinition-at-managementgroup" {
-            (Get-AzTenantDeployment -Name "30-create-policydefinition-at-managementgroup").ProvisioningState | Should -Match "Succeeded"
+            (Get-AzTenantDeployment -Name "AzOps-30-create-policydefinition-at-managementgroup").ProvisioningState | Should -Match "Succeeded"
         }
         It "Passes Discovery of Tailspin Management Group" {
             (Get-ChildItem -Directory -Recurse -Path $env:AZOPS_STATE).Name | Should -Contain 'Tailspin (Tailspin)'
@@ -199,9 +199,9 @@ Describe "Tenant E2E Deployment (Integration Test)" -Tag "integration", "e2e", "
 
     AfterAll {
         # Cleaning up Tailspin Management Group
-        if (Get-AzManagementGroup -GroupName 'Tailspin' -ErrorAction SilentlyContinue) {
+        if (Get-AzManagementGroup -GroupId 'Tailspin' -ErrorAction SilentlyContinue -WarningAction SilentlyContinue) {
             Write-AzOpsLog -Level Verbose -Topic "AzOps.IAB.Tests" -Message "Cleaning up Tailspin Management Group"
-            Remove-AzOpsManagementGroup -groupName  'Tailspin'
+            Remove-AzOpsManagementGroup -GroupName 'Tailspin' -WarningAction SilentlyContinue 
         }
     }
 }
